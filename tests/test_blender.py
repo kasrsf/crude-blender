@@ -4,7 +4,7 @@ import pytest
 
 from src import crude_blender
 
-EXPECTED_INDEX_NAME = 'Crude'
+EXPECTED_INDEX_NAME = 'Name'
 EXPECTED_COLUMNS = ['5%', '10%', '20%', '30%', '40%', '50%', 
                     '60%', '70%', '80%', '90%', '95%', '99%']
 
