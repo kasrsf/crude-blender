@@ -1,3 +1,4 @@
+#%%
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -79,3 +80,72 @@ def load_from_csv(filepath=SAMPLE_DATA_PATH):
     data_df = data_df.apply(np.vectorize(extract_mean_from_confidence_interval))
     
     return data_df
+
+
+def blend_linear_model(first_crude_profile,
+                       first_volume,
+                       second_crude_profile,
+                       second_volume):
+    """
+        Given two series which contain the distillation profiles for the crudes
+        to be combined and their respective volumes in the blend, calculate the
+        estimated distillation profile of the blend using a linear model
+        
+        Parameters
+        ----------
+        first_crude_profile
+            the distillation profile corresponding to the first crude in the mix
+        first_volume
+            the volume of the first oil that's being added to the mix
+        second_crude_profile
+            the distillation profile corresponding to the second crude in the mix
+        second_volume
+            the volume of the second oil that's being added to the mix
+    
+        Returns
+        -------
+        pd.Series
+            the linear combination of the two profiles with the volumes
+    """
+    assert len(first_crude_profile) == len(second_crude_profile), "the two series should have the same length"
+    total_volume = first_volume + second_volume
+    linear_blend_profile = (
+        (first_crude_profile * first_volume + second_crude_profile * second_volume)
+        / total_volume
+    )
+    # round the results to two decimals
+    return round(linear_blend_profile, 2)
+    
+def blend_oils(distillation_profiles, oil_1, vol_1, oil_2, vol_2):
+    """
+        Given the distillation profiles and the two oils to be blended,
+        output a dataframe containing information about the combination
+        and its distillation profile
+        
+        Parameters
+        ----------
+        distillation_profiles
+            Pandas DataFrame containing the distillation profiles available for the oils
+        oil_1
+            name of the first oil to be mixed
+        vol_1
+            volume of the first oil in the blend (in liters)
+        oil_2
+            name of the second oil to be mixed
+        vol_2
+            volume of the second oil in the blend (in liters)
+            
+        Returns
+        -------
+        pd.DataFrame
+            a DataFrame with columns indicating the distillation profile
+    """
+    assert oil_1 in distillation_profiles.index, f"distillation profile for {oil_1} not present in data"
+    assert oil_2 in distillation_profiles.index, f"distillation profile for {oil_2} not present in data"
+    oil_1_profile, oil_2_profile = distillation_profiles.loc[oil_1], distillation_profiles.loc[oil_2]
+    
+    blend_profile = blend_linear_model(oil_1_profile, vol_1, oil_2_profile, vol_2)
+    blend_profile.name = f"{oil_1} {vol_1}l + {oil_2} {vol_2}l"
+    blend_profile_pd = pd.DataFrame(blend_profile).T
+    blend_profile_pd.index.name = DISTILLATION_DF_INDEX_NAME
+    return blend_profile_pd

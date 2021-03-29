@@ -1,5 +1,5 @@
 import pandas as pd
-from pandas._testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_series_equal
 import pytest
 
 from src import crude_blender
@@ -34,3 +34,31 @@ def test_load_from_csv(data):
     """
     read_data = crude_blender.load_from_csv()
     assert_frame_equal(read_data, data)
+    
+def test_blend_linear_model():
+    """
+        check the correctness of the linear combination
+    """
+    a = pd.Series([1.0, 3.0, 5.0])
+    vol_a = 2
+    b = pd.Series([2.0, 4.0, 6.0])
+    vol_b = 3
+    
+    expected_res = pd.Series([1.6, 3.6, 5.6])
+    res = crude_blender.blend_linear_model(a, vol_a, b, vol_b)
+    print(expected_res)
+    assert_series_equal(res, expected_res)
+    
+def test_blend_oils(data):
+    oil_1 = 'Peace'
+    vol_1 = 2
+    oil_2 = 'Suncor Synthetic H'
+    vol_2 = 3
+    
+    res_df = crude_blender.blend_oils(data, oil_1, vol_1, oil_2, vol_2)
+    expected_index = "Peace 2l + Suncor Synthetic H 3l"
+    # assert correct columns
+    assert list(res_df.columns) == EXPECTED_COLUMNS
+    
+    # assert index
+    assert res_df.index == expected_index
